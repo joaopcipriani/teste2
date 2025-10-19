@@ -1,17 +1,24 @@
 version: "3.8"
 
-x-sentry-defaults: &sentry-defaults
-  image: sentry:21.7.0
-  restart: unless-stopped
-  env_file:
-    - .env
-  environment:
-    SENTRY_SECRET_KEY: "I6kLp3bT9mD7wZyQ0rVjGx8aP4eFuNsRtHb"
-    SENTRY_TSDB: "sentry.tsdb.snuba.SnubaTSDB"
-    SENTRY_EVENT_RETENTION_DAYS: 90
-    SENTRY_SINGLE_ORGANIZATION: "true"
-
 services:
+  sentry:
+    image: sentry:21.6.0
+    restart: unless-stopped
+    environment:
+      SENTRY_SECRET_KEY: "I6kLp3bT9mD7wZyQ0rVjGx8aP4eFuNsRtHb"
+      SENTRY_TSDB: "sentry.tsdb.snuba.SnubaTSDB"
+      SENTRY_EVENT_RETENTION_DAYS: 90
+      SENTRY_SINGLE_ORGANIZATION: "true"
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - snuba
+    volumes:
+      - sentry-data:/var/lib/sentry
+
   postgres:
     image: postgres:14
     restart: unless-stopped
@@ -20,7 +27,7 @@ services:
       POSTGRES_PASSWORD: sentry
       POSTGRES_DB: sentry
     volumes:
-      - sentry-postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
   redis:
     image: redis:7
@@ -55,7 +62,7 @@ services:
       - clickhouse-data:/var/lib/clickhouse
 
   snuba:
-    image: getsentry/snuba:24.8.0
+    image: getsentry/snuba:21.6.0
     restart: unless-stopped
     depends_on:
       - clickhouse
@@ -69,38 +76,7 @@ services:
       REDIS_HOST: redis
       DATABASE_HOST: postgres
 
-  sentry-web:
-    <<: *sentry-defaults
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-      - snuba
-    command: "run web"
-    ports:
-      - "9000:9000"
-    environment:
-      SENTRY_WEB_HOST: "0.0.0.0"
-      SENTRY_WEB_PORT: "9000"
-
-  sentry-worker:
-    <<: *sentry-defaults
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-      - snuba
-    command: "run worker"
-
-  sentry-cron:
-    <<: *sentry-defaults
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-      - snuba
-    command: "run cron"
-
 volumes:
-  sentry-postgres:
+  sentry-data:
+  postgres-data:
   clickhouse-data:
