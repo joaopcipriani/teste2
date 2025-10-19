@@ -84,17 +84,19 @@ services:
       - sentry-redis
       - snuba-api
     environment:
-      SENTRY_SECRET_KEY: "58nis-*p(c9f-#2c)of#*6vfb=q(yecz88w_z0m-+anc(^1d4^"
+      SENTRY_SECRET_KEY: "58nis-*p(c9f-#2c)of#*6vfb=q(yecz88w_z0m-+"
       SENTRY_DB_USER: sentry
       SENTRY_DB_PASSWORD: sentry
       SENTRY_DB_NAME: sentry
       SENTRY_DB_HOST: sentry-postgres
       SENTRY_REDIS_HOST: sentry-redis
       SENTRY_SNUBA_HOST: snuba-api
+      SENTRY_CONF: /etc/sentry
     ports:
       - "9000:9000"
     volumes:
       - sentry-data:/data
+      - ./sentry-config:/etc/sentry
     command: ["run", "web"]
     restart: unless-stopped
 
