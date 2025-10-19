@@ -43,7 +43,7 @@ services:
 
   # ClickHouse
   clickhouse:
-    image: yandex/clickhouse-server:25.3-alpine
+    image: clickhouse/clickhouse-server:25.7
     volumes:
       - clickhouse-data:/var/lib/clickhouse
     restart: unless-stopped
