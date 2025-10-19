@@ -59,7 +59,7 @@ services:
       - postgres
       - redis
     environment:
-      SENTRY_SECRET_KEY: "minha_chave_super_secreta_123"
+      SENTRY_SECRET_KEY: "A!w1jQ#FJwZ2R@p9k7Nv2$z!9R3qXv!524f4f42f22213445f##454"
       SENTRY_POSTGRES_HOST: postgres
       SENTRY_DB_USER: sentry
       SENTRY_DB_PASSWORD: sentry
