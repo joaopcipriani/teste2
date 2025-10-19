@@ -74,14 +74,15 @@ services:
     volumes:
       - sentry-data:/data
     entrypoint: ["/bin/sh", "-c"]
-    command: >
-      mkdir -p /etc/sentry &&
-      echo 'from sentry.conf.server import *' > /etc/sentry/sentry.conf.py &&
-      echo 'SENTRY_OPTIONS["cache.backend"] = "sentry.cache.redis.RedisCache"' >> /etc/sentry/sentry.conf.py &&
-      echo 'SENTRY_OPTIONS["redis.clusters"] = {"default": {0: {"host": "sentry-redis", "port": 6379}}}' >> /etc/sentry/sentry.conf.py &&
-      sentry upgrade --noinput &&
-      sentry createuser --email admin@example.com --superuser --password admin &&
+    command: |
+      mkdir -p /etc/sentry
+      echo 'from sentry.conf.server import *' > /etc/sentry/sentry.conf.py
+      echo 'SENTRY_OPTIONS["cache.backend"] = "sentry.cache.redis.RedisCache"' >> /etc/sentry/sentry.conf.py
+      echo 'SENTRY_OPTIONS["redis.clusters"] = {"default": {0: {"host": "sentry-redis", "port": 6379}}}' >> /etc/sentry/sentry.conf.py
+      sentry upgrade --noinput
+      sentry createuser --email admin@example.com --superuser --password admin || true
       sentry run web
+
     restart: unless-stopped
 
 volumes:
