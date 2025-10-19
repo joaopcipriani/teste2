@@ -20,27 +20,6 @@ services:
       - sentry-redis-data:/data
     restart: unless-stopped
 
-  # Zookeeper
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.1
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    restart: unless-stopped
-
-  # Kafka
-  kafka:
-    image: confluentinc/cp-kafka:7.6.1
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    restart: unless-stopped
-
   # ClickHouse
   clickhouse:
     image: clickhouse/clickhouse-server:25.7
@@ -53,25 +32,19 @@ services:
     image: getsentry/snuba:23.10.0
     depends_on:
       - clickhouse
-      - kafka
-      - zookeeper
     environment:
       CLICKHOUSE_HOST: clickhouse
-      KAFKA_BROKER: kafka:9092
       REDIS_HOST: sentry-redis
     command: api
     restart: unless-stopped
 
-  # Snuba consumer (optional)
+  # Snuba Consumer (optional)
   snuba-consumer:
     image: getsentry/snuba:23.10.0
     depends_on:
       - clickhouse
-      - kafka
-      - zookeeper
     environment:
       CLICKHOUSE_HOST: clickhouse
-      KAFKA_BROKER: kafka:9092
       REDIS_HOST: sentry-redis
     command: consumer
     restart: unless-stopped
@@ -96,8 +69,14 @@ services:
       - "9000:9000"
     volumes:
       - sentry-data:/data
-      - ./sentry-config:/etc/sentry
-    command: ["run", "web"]
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "mkdir -p /etc/sentry &&
+       echo 'from sentry.conf.server import *' > /etc/sentry/sentry.conf.py &&
+       echo 'system.secret-key: \"$SENTRY_SECRET_KEY\"' > /etc/sentry/config.yml &&
+       sentry upgrade --noinput &&
+       sentry createuser --email admin@example.com --superuser --password admin &&
+       sentry run web"
     restart: unless-stopped
 
 volumes:
