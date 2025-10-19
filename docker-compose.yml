@@ -1,86 +1,90 @@
-version: "3.8"
+version: '3.8'
 
 services:
   postgres:
     image: postgres:14
     container_name: sentry-postgres
-    restart: unless-stopped
     environment:
       POSTGRES_USER: sentry
       POSTGRES_PASSWORD: sentry
       POSTGRES_DB: sentry
     volumes:
-      - sentry-postgres-data:/var/lib/postgresql/data
+      - sentry-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
 
   redis:
     image: redis:7
     container_name: sentry-redis
     restart: unless-stopped
 
-  sentry-web:
-    image: sentry-selfhosted:test
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sentry-web
+  smtp:
+    image: mailhog/mailhog
+    container_name: sentry-smtp
+    ports:
+      - "8025:8025"  # painel de e-mails: http://192.168.31.150:8025
     restart: unless-stopped
+
+  sentry:
+    image: getsentry/sentry:24.10.0
+    container_name: sentry-web
     depends_on:
       - postgres
       - redis
+      - smtp
     environment:
-      SENTRY_SECRET_KEY: "0b0dcdf2d3d3a944d9f2385f6fbd48c341c9944f217efc0ef8392b7ff3b9b0b6"
-      SENTRY_SINGLE_ORGANIZATION: "True"
-      SENTRY_USE_SSL: "False"
+      SENTRY_SECRET_KEY: "minha_chave_super_secreta_123"
+      SENTRY_POSTGRES_HOST: postgres
       SENTRY_DB_USER: sentry
       SENTRY_DB_PASSWORD: sentry
       SENTRY_DB_NAME: sentry
       SENTRY_REDIS_HOST: redis
-      SENTRY_POSTGRES_HOST: postgres
+      SENTRY_EMAIL_HOST: smtp
+      SENTRY_EMAIL_PORT: 1025
       SENTRY_SERVER_EMAIL: "sentry@example.com"
+      SENTRY_ADMIN_EMAIL: "admin@example.com"
+      SENTRY_USE_SSL: "false"
+      SENTRY_SINGLE_ORGANIZATION: "true"
     ports:
-      - "35000:9000"
+      - "9000:9000"
+    restart: unless-stopped
+    command: ["run", "web"]
     volumes:
       - sentry-data:/data
-    command: ["/docker-entrypoint.sh", "run", "web"]
 
-  sentry-worker:
-    image: sentry-selfhosted:test
-    build:
-      context: .
-      dockerfile: Dockerfile
+  worker:
+    image: getsentry/sentry:24.10.0
     container_name: sentry-worker
-    restart: unless-stopped
     depends_on:
-      - redis
+      - sentry
       - postgres
+      - redis
     environment:
-      SENTRY_SECRET_KEY: "0b0dcdf2d3d3a944d9f2385f6fbd48c341c9944f217efc0ef8392b7ff3b9b0b6"
+      SENTRY_SECRET_KEY: "minha_chave_super_secreta_123"
+      SENTRY_POSTGRES_HOST: postgres
       SENTRY_DB_USER: sentry
       SENTRY_DB_PASSWORD: sentry
       SENTRY_DB_NAME: sentry
       SENTRY_REDIS_HOST: redis
-      SENTRY_POSTGRES_HOST: postgres
-    command: ["/docker-entrypoint.sh", "run", "worker"]
+    restart: unless-stopped
+    command: ["run", "worker"]
 
-  sentry-cron:
-    image: sentry-selfhosted:test
-    build:
-      context: .
-      dockerfile: Dockerfile
+  cron:
+    image: getsentry/sentry:24.10.0
     container_name: sentry-cron
-    restart: unless-stopped
     depends_on:
-      - redis
+      - sentry
       - postgres
+      - redis
     environment:
-      SENTRY_SECRET_KEY: "0b0dcdf2d3d3a944d9f2385f6fbd48c341c9944f217efc0ef8392b7ff3b9b0b6"
+      SENTRY_SECRET_KEY: "minha_chave_super_secreta_123"
+      SENTRY_POSTGRES_HOST: postgres
       SENTRY_DB_USER: sentry
       SENTRY_DB_PASSWORD: sentry
       SENTRY_DB_NAME: sentry
       SENTRY_REDIS_HOST: redis
-      SENTRY_POSTGRES_HOST: postgres
-    command: ["/docker-entrypoint.sh", "run", "cron"]
+    restart: unless-stopped
+    command: ["run", "cron"]
 
 volumes:
-  sentry-postgres-data:
+  sentry-postgres:
   sentry-data:
