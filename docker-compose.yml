@@ -2,14 +2,12 @@ version: "3.9"
 
 services:
   haproxy:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: haproxy:latest
     container_name: haproxy
     restart: unless-stopped
     ports:
-      - "13006:80"
-      - "13007:8404"  # painel de stats
+      - "13006:13006"
+      - "13007:13007"
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     environment:
@@ -19,3 +17,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # Exemplo opcional de backends (remova se não quiser)
+  web1:
+    image: nginx:alpine
+  web2:
+    image: nginx:alpine
