@@ -7,7 +7,7 @@ services:
     command: ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg", "-db"]
     ports:
       - "13006:80"
-      - "13006:8404"
+      - "13007:8404"
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     restart: unless-stopped
