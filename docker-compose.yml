@@ -1,21 +1,21 @@
-version: "3.8"
+version: "3.9"
 
 services:
   haproxy:
-    image: haproxy:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: haproxy
-    command: ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg", "-db"]
+    restart: unless-stopped
     ports:
-      - "13007:80"
-      - "13008:8404"
+      - "13006:80"
+      - "13007:8404"  # painel de stats
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-    restart: unless-stopped
-
-  web1:
-    image: nginx:alpine
-    container_name: web1
-
-  web2:
-    image: nginx:alpine
-    container_name: web2
+    environment:
+      - TZ=America/Sao_Paulo
+    healthcheck:
+      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
